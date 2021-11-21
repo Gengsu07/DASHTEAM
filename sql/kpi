@@ -1,0 +1,13 @@
+select sum(nominal) as bruto20 from mpn 
+where datebayar > '2019-12-31' and 
+datebayar <= date_sub(curdate(),interval 1 year) ;
+
+select sum(nominal) as jumlah from spmkp 
+where tanggal > '2019-12-31' and 
+tanggal <= date_sub(curdate(),interval 1 year);
+
+select sum(nominal) as jumlah from spmkp 
+where tanggal > '2020-12-31' and 
+tanggal <= curdate();
+
+select * from spmkp;

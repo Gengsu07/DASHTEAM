@@ -1,0 +1,32 @@
+select 
+M.npwp,
+M.kpp,
+M.cabang,
+M.nama as namawp ,
+kdmap,
+kdbayar,
+masa,
+tahun,
+tanggalbayar,
+bulanbayar,
+tahunbayar,
+datebayar,
+nominal,
+ntpn,
+B.pegawai,
+B.seksi
+from mpn M
+	left join 
+	(select A.pegawai,s.nama as seksi,A.npwp from 
+				(select npwp,
+					m2.nipar,
+					p2.nama as pegawai,
+					p2.seksi,
+					p2.nip 
+					from masterfile m2
+					join pegawai p2 
+					on m2.nipar = p2.nip ) A
+			join seksi s 
+			on A.seksi = s.id ) B
+	on M.npwp =B.npwp
+where tahunbayar ='2021';

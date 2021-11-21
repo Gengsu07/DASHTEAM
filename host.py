@@ -1,0 +1,49 @@
+from operator import add
+from hydralit import HydraHeadApp
+from hydralit.hydra_app import HydraApp
+import streamlit as st 
+from MPN import mpn_app
+from PPMPKM import ppmpkm_app
+from APPROWEB import approweb_app
+from DATA_APPROWEB import Pemanfaatan_App
+from EKSPLOR import eda_app
+from login_app import LoginApp
+from dashboard_app import dashboard
+from update_netto2021 import update_db
+
+if __name__ == '__main__':
+    over_theme = {'txc_inactive': '#FFFFFF'}
+    app = HydraApp(title='Dashboard KPP Madya Jakarta Timur',favicon="resources\djp_kotak.png",
+    hide_streamlit_markers=True,
+    use_banner_images=["resources\logo-pajak-01.png",None,{'header':"<h1 style='text-align:center;padding: 0px 0px;color:white;font-size:200%;'>Dashboard KPP Madya Jakarta Timur</h1><br>"},None,"resources\logo-pajak-01.png"], 
+    banner_spacing=[5,30,60,30,5],
+    navbar_animation = True,
+    use_navbar=True,
+    navbar_sticky=True,
+    navbar_theme=over_theme)    
+
+    app.add_app('Login',app=LoginApp(title='Login'),is_login=True)
+    app.add_app('Dashboard', app=dashboard(title='Dashboard'),is_home=True)
+    app.add_app('MPN',icon='📊',app=mpn_app(title = 'MPN'))
+    app.add_app('PPM_PKM',icon='📈', app=ppmpkm_app(title='PPM_PKM') )
+    app.add_app('Aktivitas_Approweb', app=approweb_app(title='Aktivitas_Approweb'))
+    app.add_app('Data_Approweb',app=Pemanfaatan_App(title='Data_Approweb'))
+    app.add_app('Eksplorasi Data', app = eda_app(title='Eksplorasi Data'))
+    app.add_app('Update Database',app=update_db(title = 'Update Database'))
+
+   
+    user_access_level, username = app.check_access()
+    if user_access_level >= 1:
+        complex_nav = {
+            'Dashboard': ['Dashboard'],
+            '🔥 Kinerja Penerimaan': ['MPN','PPM_PKM'],
+            'Approweb': ['Aktivitas_Approweb',"Data_Approweb"],
+            'Tools': ["Eksplorasi Data"],
+            'Admin':['Update Database']
+        }
+    else:
+        complex_nav = {
+            'Dashboard': ['Dashboard'],
+        }
+
+    app.run(complex_nav)
