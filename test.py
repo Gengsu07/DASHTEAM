@@ -56,13 +56,13 @@ def netto20(x):
     return data
        
 
-netto2021 = netto21('select sum(nominal) as netto from netto2021;')
-netto2020 = netto20('select sum(JML_SETOR) as netto from netto2020;')
-delta_netto = ((netto2021['netto'].sum()-netto2020['netto'].sum())/netto2020['netto'].sum())*100
-netto_bulanini = netto21('select sum(nominal)as netto from netto2021 where month(datebayar) = month(curdate());')
-netto_bulanlalu = netto21('select sum(nominal)as netto from netto2021 where month(datebayar) = month(curdate()-interval 1 month);')
-delta_netto_bulan = ((netto_bulanini['netto'].sum()-netto_bulanlalu['netto'].sum())/netto_bulanlalu['netto'].sum())*100
-capaian = (netto2021['netto'].sum()/10171068857000)*100
+netto2021 = netto21('select sum(nominal) as netto from netto2021;')['netto'].sum()
+netto2020 = netto20('select sum(JML_SETOR) as netto from netto2020;')['netto'].sum()
+delta_netto = ((netto2021-netto2020)/netto2020)*100
+netto_bulanini = netto21('select sum(nominal)as netto from netto2021 where month(datebayar) = month(curdate());')['netto'].sum()
+netto_bulanlalu = netto21('select sum(nominal)as netto from netto2021 where month(datebayar) = month(curdate()-interval 1 month);')['netto'].sum()
+delta_netto_bulan = ((netto_bulanini-netto_bulanlalu)/netto_bulanlalu)*100
+capaian = (netto2021/10171068857000)*100
 
 bruto21_kueri = '''select sum(nominal) as jumlah from netto2021
 where ket  <> 'SPMKP'
@@ -93,9 +93,9 @@ where ket = 'SPMKP' and
 datebayar > '2020-12-31' and
 datebayar <= curdate();''')['jumlah'].sum()*-1
 
-spmkp_bulanini = netto21(''' select sum(nominal) as jumlah from netto2021 where ket='SPMKP' and month(datebayar) = month(curdate()); ''')
-spmkp_bulanlalu = netto21('''select sum(nominal) as jumlah from netto2021 where ket = 'SPMKP' and month(datebayar) = month(curdate()-interval 1 month);''')
-delta_spmkp_bulan = ((spmkp_bulanini['jumlah'].sum()*-1-spmkp_bulanlalu['jumlah'].sum()*-1)/spmkp_bulanlalu['jumlah'].sum())*100
+spmkp_bulanini = netto21(''' select sum(nominal) as jumlah from netto2021 where ket='SPMKP' and month(datebayar) = month(curdate()); ''')['jumlah'].sum()*-1
+spmkp_bulanlalu = netto21('''select sum(nominal) as jumlah from netto2021 where ket = 'SPMKP' and month(datebayar) = month(curdate()-interval 1 month);''')['jumlah'].sum()*-1
+delta_spmkp_bulan = ((spmkp_bulanini-spmkp_bulanlalu)/spmkp_bulanlalu)*100
 delta_spmkp = ((spmkp21_k-spmkp20_k)/spmkp20_k)*100
 
 tgl_mpn = netto21('SELECT  MAX(datebayar) as Tanggal_update FROM netto2021 where ket ="MPN";')
@@ -104,21 +104,21 @@ tgl_spm = netto21('SELECT  MAX(datebayar) as Tanggal_update FROM netto2021 where
 colkpi1,colkpi2,colkpi3,colkpi4 = st.columns([2,2,2,1])
 with colkpi1:
     st.subheader('Bruto')
-    st.metric(label = 's.d Sekarang', value='{}M'.format(str(bruto21/1000000000000)[:4]),
+    st.metric(label = 's.d Sekarang', value='{}T'.format(str(bruto21/1000000000000)[:4]),
     delta='{}%'.format(str(delta_bruto)[:4]))
-    st.metric(label = 'Bulan ini', value= '{} M'.format(str(bruto_bulanini)[:4]),
+    st.metric(label = 'Bulan ini', value= '{} M'.format(str(bruto_bulanini/1000000000)[:3]),
     delta='{}%'.format(str(delta_bruto_bulan)[:4]))
 with colkpi2:
     st.subheader('SPMKP')
-    st.metric(label = 's.d Sekarang', value=str(spmkp21_k)[:3],
+    st.metric(label = 's.d Sekarang', value='{}T'.format(str(spmkp21_k/1000000000000)[:4]),
     delta='{}%'.format(delta_spmkp.round(decimals =2)))
-    st.metric(label= 'Bulan ini', value= '{:,.0f} M'.format(spmkp_bulanini['jumlah'].sum()*-1/1000000000),
+    st.metric(label= 'Bulan ini', value= '{} M'.format(str(spmkp_bulanini/1000000)[:3]),
     delta='{}%'.format(delta_spmkp_bulan.round(decimals=2)))
 with colkpi3:
     st.subheader('Netto')
-    st.metric(label='s.d Sekarang',value = '{:,.0f} M'.format(netto2021['netto'].sum()/1000000000),
+    st.metric(label='s.d Sekarang',value = '{} T'.format(str(netto2021/1000000000000)[:4]),
     delta ='{}%'.format(delta_netto.round(decimals=2)))
-    st.metric(label='Bulan ini', value='{:,.0f} M'.format(netto_bulanini['netto'].sum()/1000000000),
+    st.metric(label='Bulan ini', value='{} M'.format(str(netto_bulanini/1000000000)[:3]),
     delta='{}%'.format(delta_netto_bulan.round(decimals=2)))
 with colkpi4:
     st.metric(label='Capaian',value="%.2f" %capaian)

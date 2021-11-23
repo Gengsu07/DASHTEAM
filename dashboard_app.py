@@ -64,14 +64,14 @@ class dashboard(HydraHeadApp):
             data = pd.read_sql(x,db_conn,parse_dates=['TGL_SETOR'])
             return data
        
-
-        netto2021 = netto21('select sum(nominal) as netto from netto2021;')
-        netto2020 = netto20('select sum(JML_SETOR) as netto from netto2020;')
-        delta_netto = ((netto2021['netto'].sum()-netto2020['netto'].sum())/netto2020['netto'].sum())*100
-        netto_bulanini = netto21('select sum(nominal)as netto from netto2021 where month(datebayar) = month(curdate());')
-        netto_bulanlalu = netto21('select sum(nominal)as netto from netto2021 where month(datebayar) = month(curdate()-interval 1 month);')
-        delta_netto_bulan = ((netto_bulanini['netto'].sum()-netto_bulanlalu['netto'].sum())/netto_bulanlalu['netto'].sum())*100
-        capaian = (netto2021['netto'].sum()/10171068857000)*100
+                
+        netto2021 = netto21('select sum(nominal) as netto from netto2021;')['netto'].sum()
+        netto2020 = netto20('select sum(JML_SETOR) as netto from netto2020;')['netto'].sum()
+        delta_netto = ((netto2021-netto2020)/netto2020)*100
+        netto_bulanini = netto21('select sum(nominal)as netto from netto2021 where month(datebayar) = month(curdate());')['netto'].sum()
+        netto_bulanlalu = netto21('select sum(nominal)as netto from netto2021 where month(datebayar) = month(curdate()-interval 1 month);')['netto'].sum()
+        delta_netto_bulan = ((netto_bulanini-netto_bulanlalu)/netto_bulanlalu)*100
+        capaian = (netto2021/10171068857000)*100
 
         bruto21_kueri = '''select sum(nominal) as jumlah from netto2021
         where ket  <> 'SPMKP'
@@ -81,7 +81,7 @@ class dashboard(HydraHeadApp):
         where ket  <> 'SPMKP' and month(datebayar) = month(curdate()) ;''')['jumlah'].sum()
 
         bruto_bulanlalu = netto21('''select sum(nominal) as jumlah from netto2021
-        where ket  <> 'SPMKP'and month(datebayar) = month(curdate()-interval 1 month) ;''')
+        where ket  <> 'SPMKP'and month(datebayar) = month(curdate()-interval 1 month) ;''')['jumlah'].sum()
 
         bruto20_kueri = '''select sum(JML_SETOR) as jumlah from netto2020
         where Jenis IN('MPN','SPM','PBK TERIMA SEKANTOR','PBK KIRIM SEKANTOR','PBK KIRIM BEDA KANTOR',
@@ -91,21 +91,21 @@ class dashboard(HydraHeadApp):
         bruto21 = pd.read_sql(bruto21_kueri,db_conn)['jumlah'].sum()
         bruto20 = pd.read_sql(bruto20_kueri,db_conn)['jumlah'].sum()
         delta_bruto = ((bruto21-bruto20)/bruto20)*100
-        delta_bruto_bulan = ((bruto_bulanini['jumlah'].sum()-bruto_bulanlalu['jumlah'].sum())/bruto_bulanlalu['jumlah'].sum())*100
+        delta_bruto_bulan = ((bruto_bulanini-bruto_bulanlalu)/bruto_bulanlalu)*100
 
         spmkp20_k = netto20('''select abs(sum(JML_SETOR)) as jumlah from netto2020
         where Jenis = 'SPMKP dari SIDJP' and 
-        TGL_SETOR <= date_sub(curdate(),interval 1 year);''')
+        TGL_SETOR <= date_sub(curdate(),interval 1 year);''')['jumlah'].sum()
 
         spmkp21_k = netto21('''select sum(nominal) as jumlah from netto2021
         where ket = 'SPMKP' and 
         datebayar > '2020-12-31' and
-        datebayar <= curdate();''')['jumlah'].sum()/1000000000*-1
+        datebayar <= curdate();''')['jumlah'].sum()*-1
 
-        spmkp_bulanini = netto21(''' select sum(nominal) as jumlah from netto2021 where ket='SPMKP' and month(datebayar) = month(curdate()); ''')
-        spmkp_bulanlalu = netto21('''select sum(nominal) as jumlah from netto2021 where ket = 'SPMKP' and month(datebayar) = month(curdate()-interval 1 month);''')
-        delta_spmkp_bulan = ((spmkp_bulanini['jumlah'].sum()*-1-spmkp_bulanlalu['jumlah'].sum()*-1)/spmkp_bulanlalu['jumlah'].sum())*100
-        delta_spmkp = ((spmkp21_k-spmkp20_k['jumlah'].sum())/spmkp20_k['jumlah'].sum())*100
+        spmkp_bulanini = netto21(''' select sum(nominal) as jumlah from netto2021 where ket='SPMKP' and month(datebayar) = month(curdate()); ''')['jumlah'].sum()*-1
+        spmkp_bulanlalu = netto21('''select sum(nominal) as jumlah from netto2021 where ket = 'SPMKP' and month(datebayar) = month(curdate()-interval 1 month);''')['jumlah'].sum()*-1
+        delta_spmkp_bulan = ((spmkp_bulanini-spmkp_bulanlalu)/spmkp_bulanlalu)*100
+        delta_spmkp = ((spmkp21_k-spmkp20_k)/spmkp20_k)*100
 
         tgl_mpn = netto21('SELECT  MAX(datebayar) as Tanggal_update FROM netto2021 where ket ="MPN";')
         tgl_spm = netto21('SELECT  MAX(datebayar) as Tanggal_update FROM netto2021 where ket ="SPM";')
@@ -113,28 +113,29 @@ class dashboard(HydraHeadApp):
         colkpi1,colkpi2,colkpi3,colkpi4 = st.columns([2,2,2,1])
         with colkpi1:
             st.subheader('Bruto')
-            st.metric(label = 's.d Sekarang', value=str(bruto21)[:3],
-            delta='{}%'.format(delta_bruto.round(decimals=2)))
-            st.metric(label = 'Bulan ini', value= '{:,.0f} M'.format(bruto_bulanini['jumlah'].sum()/1000000000),
-            delta='{}%'.format(delta_bruto_bulan.round(decimals=2)))
+            st.metric(label = 's.d Sekarang', value='{}T'.format(str(bruto21/1000000000000)[:4]),
+            delta='{}%'.format(str(delta_bruto)[:4]))
+            st.metric(label = 'Bulan ini', value= '{} M'.format(str(bruto_bulanini/1000000000)[:3]),
+            delta='{}%'.format(str(delta_bruto_bulan)[:4]))
         with colkpi2:
             st.subheader('SPMKP')
-            st.metric(label = 's.d Sekarang', value='{:,.0f} M'.format(spmkp21_k),
+            st.metric(label = 's.d Sekarang', value='{}T'.format(str(spmkp21_k/1000000000000)[:4]),
             delta='{}%'.format(delta_spmkp.round(decimals =2)))
-            st.metric(label= 'Bulan ini', value= '{:,.0f} M'.format(spmkp_bulanini['jumlah'].sum()*-1/1000000000),
+            st.metric(label= 'Bulan ini', value= '{} M'.format(str(spmkp_bulanini/1000000)[:3]),
             delta='{}%'.format(delta_spmkp_bulan.round(decimals=2)))
         with colkpi3:
             st.subheader('Netto')
-            st.metric(label='s.d Sekarang',value = '{:,.0f} M'.format(netto2021['netto'].sum()/1000000000),
+            st.metric(label='s.d Sekarang',value = '{} T'.format(str(netto2021/1000000000000)[:4]),
             delta ='{}%'.format(delta_netto.round(decimals=2)))
-            st.metric(label='Bulan ini', value='{:,.0f} M'.format(netto_bulanini['netto'].sum()/1000000000),
+            st.metric(label='Bulan ini', value='{} M'.format(str(netto_bulanini/1000000000)[:3]),
             delta='{}%'.format(delta_netto_bulan.round(decimals=2)))
         with colkpi4:
             st.metric(label='Capaian',value="%.2f" %capaian)
             st.write('MPN:',tgl_mpn.loc[0,'Tanggal_update'])
             st.write('SPM:',tgl_spm.loc[0,'Tanggal_update'])
         st.markdown("""<hr style="height:3px;border:none;color:#FFFFFF;background-color:#FFFFFF;" /> """, unsafe_allow_html=True)
-       
+
+
         data2021 = netto21('select FULL,NAMA_WP,MAP,NAMA_KLU,NAMA_AR,SEKSI,datebayar,ket,nominal from netto2021;')
         linedata = data2021.groupby(['datebayar']).sum().reset_index()
         linechart = alt.Chart(linedata).mark_bar().encode(
