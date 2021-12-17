@@ -12,10 +12,9 @@ from dashboard_app import dashboard
 from update_netto2021 import update_db
 
 if __name__ == '__main__':
-    over_theme = {'txc_inactive': '#FFFFFF'}
-    app = HydraApp(title='Dashboard KPP Madya Jakarta Timur',favicon="resources\djp_kotak.png",
-    hide_streamlit_markers=True,
-    use_banner_images=["resources\logo-pajak-01.png",None,{'header':"<h1 style='text-align:center;padding: 0px 0px;color:white;font-size:200%;'>Dashboard KPP Madya Jakarta Timur</h1><br>"},None,"resources\logo-pajak-01.png"], 
+    over_theme = {'txc_inactive': '#C99E10','menu_background':'#02275d','option_active':'#ffc91b','txc_active: Active':'#102754'}
+    app = HydraApp(title='Dashboard KPP Madya Jaktim',favicon="resources\djp_kotak.png",
+    hide_streamlit_markers=True, 
     banner_spacing=[5,30,60,30,5],
     navbar_animation = True,
     use_navbar=True,

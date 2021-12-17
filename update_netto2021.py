@@ -159,7 +159,7 @@ class update_db(HydraHeadApp):
 
             kosong = ['NAMA_WP', 'NAMA_AR', 'SEKSI', 'NAMA_KLU']
             for i in kosong:
-                netto2021[i].fillna('WP Pindah',inplace=True)
+                netto2021[i].fillna('Non WP Madtim',inplace=True)
 
             netto2021.to_sql(con=db_conn,name='netto2021',if_exists='replace',index=False)
 

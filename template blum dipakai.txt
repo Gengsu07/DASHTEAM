@@ -1,0 +1,52 @@
+data2021 = netto21('select FULL,NAMA_WP,MAP,NAMA_KLU,NAMA_AR,SEKSI,datebayar,ket,nominal from netto2021;')
+        linedata = data2021.groupby(['datebayar']).sum().reset_index()
+        linechart = alt.Chart(linedata).mark_bar().encode(
+            x = alt.X('datebayar:T', title='Tanggal Bayar'),
+            y = alt.Y('sum(nominal)', title='Nominal',scale=alt.Scale(domain=[0,150000000000])),
+            tooltip = ['datebayar','nominal']
+        ).properties( title = 'Trendline Pembayaran',
+            width = 1280,
+            height = 420
+        ).interactive()
+        st.altair_chart(linechart)
+
+        bulan = data2021.filter(['datebayar','SEKSI','nominal'])
+        bulan['namabulan'] = bulan['datebayar'].dt.month_name()
+        bulan['nomorbulan'] = bulan['datebayar'].dt.month
+        bulan = bulan.groupby(['namabulan','SEKSI']).sum().reset_index().sort_values(by='nomorbulan')
+        bulan_bar = px.bar(bulan, x ='namabulan',y='nominal',color='SEKSI',barmode='stack',template='plotly_white',width=820)
+        bulan_bar.update_layout({'showlegend' : False,'plot_bgcolor':'rgba(0, 0, 0,0)','paper_bgcolor': 'rgba(0, 0, 0,0)',
+        'xaxis_title':'Bulan','margin_t':1,'margin_r':1})
+
+        seksi = data2021.filter(['SEKSI','nominal'])
+        seksi = seksi.groupby('SEKSI').sum().reset_index()
+        perseksi = px.pie(seksi,names = 'SEKSI',values='nominal',height=480,template='plotly_white',hover_data=['nominal'])
+        perseksi.update_layout({'showlegend' : True,'plot_bgcolor':'rgba(0, 0, 0,0)','paper_bgcolor': 'rgba(0, 0, 0,0)',
+        'margin_t':1 ,'margin_l':1})
+
+        col1,col2 = st.columns([2,1])
+        with col1:
+            st.plotly_chart(bulan_bar)
+        with col2:
+            st.plotly_chart(perseksi)
+
+        kdmap = data2021.filter(['MAP','nominal']).groupby('MAP').sum().reset_index().sort_values(by='nominal')
+        kdmap_bar =px.bar(kdmap,x='MAP',y='nominal',color='nominal',color_continuous_scale='Magenta',text='nominal',width=1280)
+        kdmap_bar.update_traces(texttemplate='%{text:.2s}',textposition = 'outside')
+        kdmap_bar.update_layout({'showlegend' : False,'margin_t':1,'plot_bgcolor':'rgba(0, 0, 0,0)','paper_bgcolor': 'rgba(0, 0, 0,0)',
+        'margin_t':1 ,'margin_l':1})
+        st.plotly_chart(kdmap_bar)
+        
+        klu = data2021.filter(['NAMA_KLU','nominal']).groupby('NAMA_KLU').sum().reset_index()
+        klu.drop(klu.index[klu['NAMA_KLU']=='WP Pindah'],inplace=True)
+        klu_tree = px.treemap(klu,path=['NAMA_KLU'],values='nominal',height=420,width = 1280,hover_data=['nominal'],
+        color_continuous_scale='Tropic')
+        klu_tree.update_layout({'margin_t':1,'plot_bgcolor':'rgba(0, 0, 0,0)','paper_bgcolor': 'rgba(0, 0, 0,0)',
+        'margin_t':1 ,'margin_l':1})
+        st.plotly_chart(klu_tree)
+
+
+        go.Figure(data=[go.Table(
+            header = dict(values=list(perseksi.columns),fill_color='paleturquoise',align='left'),
+            cells = dict(values= [perseksi.SEKSI,perseksi.nominal],fill_color='lavender',align='left'))
+        ])

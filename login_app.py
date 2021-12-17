@@ -21,7 +21,8 @@ class LoginApp(HydraHeadApp):
         Application entry point.
         """
 
-        st.markdown("<h1 style='text-align: center;'>Login</h1>", unsafe_allow_html=True)
+        st.markdown("<h1 style='text-align: center;color:#C99E10;'>Dashboard</h1>", unsafe_allow_html=True)
+        st.markdown("<h1 style='text-align: center;color:#C99E10;'>KPP Madya Jakarta Timur</h1>", unsafe_allow_html=True)
 
         c1,c2,c3, = st.columns([2,2,2])
         c3.image("resources\logo-pajak-01.png",width=100,)

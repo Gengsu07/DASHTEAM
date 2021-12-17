@@ -21,12 +21,12 @@ from toolz.itertoolz import groupby
 from pandas_profiling import ProfileReport
 from streamlit_pandas_profiling import st_profile_report
 import altair as alt
-import datetime
+from datetime import *
 import numpy as np
 from hydralit import HydraHeadApp
 import mysql.connector as mysql
 import plotly.graph_objects as go
-
+import plotly.figure_factory as ff
 
 class mpn_app(HydraHeadApp):
     def __init__(self, title = '', **kwargs):
@@ -36,42 +36,36 @@ class mpn_app(HydraHeadApp):
         
     def run(self):
         alt.themes.enable('urbaninstitute')
-        #Penerimaan
+        #Koneksi Database
+        db_conn = mysql.connect(host = '10.4.19.215', user = 'sugengw07', password= 'sgwi2341',
+        database = 'mpninfo',port = '3306')
+
         @st.cache(allow_output_mutation=True)
-        def netto():
-            db_conn = mysql.connect(host = '10.4.19.215', user = 'sugengw07', password= 'sgwi2341',
-            database = 'mpninfo',port = '3306')
-            with open(r'sql\mpnspmpbkspmkp.sql','r') as query:
-                penerimaan = query.read()
-            data = pd.read_sql(penerimaan,db_conn)
-            data['NPWP_FULL'] = data.npwp+data.kpp+data.cabang
-            mf = mfwp()
-            data = pd.merge(data,mf, left_on='NPWP_FULL',right_on='NPWP', how='left')
-            data.drop(['nama', 'ntpn', 'bank', 'nosk', 'nospm', 'tipe', 'source', 'extra', 'billing','nop', 'pembuat',],axis=1,inplace=True)
+        def netto21(x):
+            data = pd.read_sql(x,db_conn)
             return data
 
-        #MFWP
-        @st.cache
-        def mfwp():
-            mf = pd.read_excel(r'MFWP\MFWP+klu.xlsx',usecols=['NPWP','NAMA_WP','NAMA_AR','SEKSI',
-            'NAMA_KLU'],
-            dtype={'NPWP':'str','NPWP_FULL':'str'},engine='openpyxl')
-            return mf
+        kueri = '''SELECT nama, kdbayar, datebayar, nominal, ket, `FULL`, NPWP, NAMA_WP, NAMA_AR, SEKSI, NAMA_KLU, `MAP`
+        FROM netto2021;'''
+        penerimaan = netto21(kueri)
 
-
-        penerimaan = netto()
-        capaian = (penerimaan['nominal'].sum()/10171068857000)*100
-
-        colseksi,colar,coltgl1,coltgl2 = st.columns([1,1,1,1])
+        colseksi,colar,colmap,coltgl1,coltgl2 = st.columns([1,1,1,1,1])
+        now = datetime.now()
+        awaltahun = datetime(now.year,1,1)
         with coltgl1:
-            mulai = st.date_input('Tanggal Mulai',datetime.date(2021,1,1))
+            mulai = st.date_input('Tanggal Mulai',awaltahun)
         with coltgl2:
-            akhir = st.date_input('Tanggal Akhir',datetime.date.today())
+            akhir = st.date_input('Tanggal Akhir',datetime.now())
         penerimaan['datebayar'] = pd.to_datetime(penerimaan['datebayar'])
         if (mulai is not None) & (akhir is not None):
             mulai = pd.to_datetime(mulai)
             akhir = pd.to_datetime(akhir)
             penerimaan_slice = penerimaan[penerimaan['datebayar'].isin(pd.date_range(mulai,akhir))]
+        with colmap:
+            kdmap = penerimaan_slice['MAP'].unique()
+            jenis_pajak = st.selectbox('Jenis Pajak',np.insert(kdmap,0,'Semua'))
+            if (jenis_pajak != 'Semua'):
+                penerimaan_slice = penerimaan_slice[penerimaan_slice['MAP']==jenis_pajak]
         with colseksi:
             seksi = st.selectbox('Seksi',['Semua','Pengawasan I','Pengawasan II','Pengawasan III',
             'Pengawasan IV','Pengawasan V','Pengawasan VI'])
@@ -82,8 +76,10 @@ class mpn_app(HydraHeadApp):
             ar = st.selectbox('Account Representative',np.insert(nama_ar,0,'Semua'))
             if (ar != 'Semua')&(seksi != 'Semua'):
                 penerimaan_slice = penerimaan_slice[penerimaan_slice['NAMA_AR']== ar]
+        
 
-        data_kecil = penerimaan_slice.filter(['NPWP_FULL','NAMA_WP','datebayar','nominal','ket','kdmap','SEKSI','NAMA_AR','NAMA_KLU','JENIS_WP'])
+        data_kecil = penerimaan_slice
+        kontribusi = data_kecil['nominal'].sum()/(penerimaan['nominal'].sum())*100
         data_over = data_kecil.groupby(['NAMA_WP']).sum().sort_values(by='nominal',ascending=False).reset_index()
         over1,over2,over3,colhead = st.columns([4,4,3,3])
         with over1:
@@ -99,36 +95,26 @@ class mpn_app(HydraHeadApp):
             #st.subheader('Terendah')
             #st.metric(label =data_over['NAMA_WP'].iloc[-1], value='{:,}'.format(data_over['nominal'].min()))
         with colhead:
-            st.metric(label='Capaian',value="%.2f" %capaian)
+            st.metric(label='Kontribusi',value="%.2f" %kontribusi)
 
-        data_area = data_kecil.groupby(['datebayar']).sum().reset_index()
-        kumulatif = alt.Chart(data_area).transform_window(kumulatifsum = 'sum(nominal)',
-        sort=[{'field':'datebayar'}]).mark_area().encode(
-            x = 'datebayar:T',
-            y= alt.Y('kumulatifsum:Q',title='Kumulatif',scale = alt.Scale(domain=[0,data_area['nominal'].sum()])),
-            tooltip = ['datebayar','kumulatifsum:Q']
-        ).properties(width=1080,height=640,title={'text':'Penerimaan Kumulatif',
-        'subtitle':'Grafik meningkat tajam berarti ada pembayaran besar, sebaliknya lembah berarti ada SPMKP',
-        'color':'white','subtitleColor':'grey'}
-        ).interactive()
-
-        area = alt.Chart(data_area).mark_line().encode(
+        
+        dataline = data_kecil.filter(['datebayar','nominal'])
+        line = alt.Chart(dataline).mark_line().encode(
             x = alt.X('datebayar:T', title='Tanggal Bayar'),
-            y = alt.Y('sum(nominal)', title='Nominal',scale=alt.Scale(domain=[0,data_area['nominal'].max()])),
+            y = alt.Y('sum(nominal)', title='Nominal',scale=alt.Scale(domain=[0,dataline['nominal'].max()])),
             tooltip = ['datebayar','nominal']
         ).properties( title = 'Trendline Pembayaran',
             width = 1080,
             height = 640
+        ).configure_axis(grid=False).configure_title(fontSize=20
         ).interactive()
-        trend = alt.vconcat(kumulatif,area).configure_axis(grid=False).configure_title(fontSize=20
-        )
-        st.altair_chart(trend)
-        st.markdown('___')
+        
+        st.altair_chart(line)
+        st.markdown("""<hr style="height:3px;border:none;color:#FFFFFF;background-color:#ffc91b;" /> """, unsafe_allow_html=True)
 
         data_bar = data_kecil.filter(['datebayar','ket','nominal'])
         #data_bar['datebayar'] = data_bar['datebayar'].dt.month
         #data_bar = data_bar.groupby(['datebayar','ket']).sum().reset_index()
-
         bulan = alt.Chart(data_bar).mark_bar().encode(
             x = alt.X('sum(nominal):Q',title='Nominal'),
             y = alt.Y('month(datebayar):N',title='Bulan'),
@@ -137,11 +123,35 @@ class mpn_app(HydraHeadApp):
         ).properties(width = 640,height=640,title='Jenis Penerimaan Per Bulan').configure_axis(grid = False
         ).interactive()
 
-        data_map = data_kecil.groupby(['SEKSI','kdmap','NAMA_AR']).sum().reset_index()
-        data_map = data_map[data_map['nominal']>0]
-        map = px.treemap(data_map,names='kdmap',path=['SEKSI','kdmap','NAMA_AR'],values='nominal',height=640,width = 1280,
-        title='Proporsi Penerimaan')
+        data_bulan = data_bar
+        data_bulan.datebayar = pd.to_datetime(data_bulan.datebayar)
+        data_bulan.datebayar = data_bulan.datebayar.dt.month_name()
+        data_bulan = data_bulan.groupby(['datebayar','ket']).sum().reset_index()
+        data_bulan.datebayar = data_bulan.datebayar.astype('str')
+        namabulan = ['January',	'February',	'March',	'April',	'May',	'June',	'July',	'August',	'September',	'October',	'November',	'December']
+        data_bulan.datebayar = pd.Categorical(data_bulan.datebayar,categories=namabulan,ordered=True)
+        data_bulan = data_bulan.sort_values(by='datebayar')
+        data_bulan = data_bulan.pivot_table(index=['datebayar'],columns='ket',values='nominal').reset_index()
+        bulan_ket = ff.create_table(data_bulan)
 
+        data_map = data_kecil.groupby(['SEKSI','MAP','NAMA_AR']).sum().reset_index()
+        data_map = data_map[data_map['nominal']>0]
+        map = px.treemap(data_map,names='MAP',path=['SEKSI','MAP','NAMA_AR'],values='nominal',height=640,width = 1280,
+        title='Proporsi Penerimaan')
+        map.update_layout({'showlegend' : True,'plot_bgcolor':'rgba(0, 0, 0,0)','paper_bgcolor': 'rgba(0, 0, 0,0)',
+        'margin_t':1 ,'margin_l':1})
+
+        coljenis, colket = st.columns(2)
+        with coljenis:
+            st.altair_chart(bulan)
+        with colket:
+            st.title('Per Jns Penerimaan')
+            st.plotly_chart(bulan_ket)
+
+        st.markdown("""<hr style="height:3px;border:none;color:#FFFFFF;background-color:#ffc91b;" /> """, unsafe_allow_html=True)
+        st.plotly_chart(map)
+        
+        '''
         data_klu = data_kecil.groupby(['NAMA_KLU']).sum().reset_index()
         topklu = data_klu.nlargest(10,'nominal').sort_values(by='nominal',ascending=False)
         topwp = data_over.nlargest(10,'nominal').sort_values(by='nominal',ascending=False)
@@ -158,5 +168,6 @@ class mpn_app(HydraHeadApp):
         with colmap:
             st.altair_chart(klu)
         st.plotly_chart(map)
+        '''
 
         return super().run()
