@@ -151,11 +151,9 @@ class update_db(HydraHeadApp):
         for i in kestring:
             netto2021[i] = netto2021[i].astype('str')
 
-        mf = pd.read_excel(r'F:\STREAMLIT\DASHTEAM\MFWP\MFWP+klu.xlsx',
-        usecols=['NPWP','NAMA_WP','NAMA_AR','SEKSI','NAMA_KLU'],
-        dtype={'NPWP':'str'},engine='openpyxl')
+        mf = pd.read_sql('select * from dashteam_mf;',con=db_conn)
 
-        kdmap = pd.read_excel('D:\DATA KANTOR\MASTERFILE\KODE_MAP_FILTERED.xlsx', dtype={'KD MAP':'str'})
+        kdmap = pd.read_sql('select * from dashteam_map',con=db_conn)
         netto2021 = pd.merge(netto2021,mf,left_on='FULL',right_on='NPWP',how='left')
         netto2021 = pd.merge(netto2021,kdmap,left_on='kdmap',right_on='KD MAP',how='left')
         netto2021.drop('kdmap',axis=1,inplace=True)
