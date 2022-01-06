@@ -169,4 +169,26 @@ class dashboard(HydraHeadApp):
         with coljenistabel:
             st.title('Per MAP(Netto)')
             st.plotly_chart(perjenis_tabel)
+        
+        st.markdown("""<hr style="height:3px;border:none;color:#FFFFFF;background-color:#ffc91b;" /> """, unsafe_allow_html=True)
+
+        data_bulan = pd.read_sql('select datebayar, ket, nominal from netto2021;',con=db_conn)
+        data_bulan.datebayar = pd.to_datetime(data_bulan.datebayar)
+        data_bulan.datebayar = data_bulan.datebayar.dt.month_name()
+        data_bulan = data_bulan.groupby(['datebayar','ket']).sum().reset_index()
+        data_bulan.datebayar = data_bulan.datebayar.astype('str')
+        namabulan = ['January',	'February',	'March',	'April',	'May',	'June',	'July',	'August',	'September',	'October',	'November',	'December']
+        data_bulan.datebayar = pd.Categorical(data_bulan.datebayar,categories=namabulan,ordered=True)
+        data_bulan = data_bulan.sort_values(by='datebayar')
+        data_bulan = data_bulan.pivot_table(index=['datebayar'],columns='ket',values='nominal').reset_index()
+        data_bulan['Netto'] = data_bulan.MPN+data_bulan['PBK KIRIM']+data_bulan['PBK TERIMA']+data_bulan.SPM+data_bulan.SPMKP
+        for col in data_bulan.columns[1:]:
+            data_bulan[col] = data_bulan[col].astype('int')
+        for col in data_bulan.columns[1:]:
+            data_bulan[col] = data_bulan[col].apply(lambda x:"{:,}".format(x))
+        tabel_bulan = ff.create_table(data_bulan)
+        #st.table(data_bulan.assign(hack='').set_index('hack'))
+        st.plotly_chart(tabel_bulan)
+      
+        
         return super().run()

@@ -61,11 +61,6 @@ class mpn_app(HydraHeadApp):
             mulai = pd.to_datetime(mulai)
             akhir = pd.to_datetime(akhir)
             penerimaan_slice = penerimaan[penerimaan['datebayar'].isin(pd.date_range(mulai,akhir))]
-        with colmap:
-            kdmap = penerimaan_slice['MAP'].unique()
-            jenis_pajak = st.selectbox('Jenis Pajak',np.insert(kdmap,0,'Semua'))
-            if (jenis_pajak != 'Semua'):
-                penerimaan_slice = penerimaan_slice[penerimaan_slice['MAP']==jenis_pajak]
         with colseksi:
             seksi = st.selectbox('Seksi',['Semua','Pengawasan I','Pengawasan II','Pengawasan III',
             'Pengawasan IV','Pengawasan V','Pengawasan VI'])
@@ -74,8 +69,13 @@ class mpn_app(HydraHeadApp):
         with colar:
             nama_ar = penerimaan_slice['NAMA_AR'].unique()
             ar = st.selectbox('Account Representative',np.insert(nama_ar,0,'Semua'))
-            if (ar != 'Semua')&(seksi != 'Semua'):
+            if (ar != 'Semua'):
                 penerimaan_slice = penerimaan_slice[penerimaan_slice['NAMA_AR']== ar]
+        with colmap:
+            kdmap = penerimaan_slice['MAP'].unique()
+            jenis_pajak = st.selectbox('Jenis Pajak',np.insert(kdmap,0,'Semua'))
+            if (jenis_pajak != 'Semua'):
+                penerimaan_slice = penerimaan_slice[penerimaan_slice['MAP']==jenis_pajak]
         
 
         data_kecil = penerimaan_slice
@@ -132,7 +132,8 @@ class mpn_app(HydraHeadApp):
         data_bulan.datebayar = pd.Categorical(data_bulan.datebayar,categories=namabulan,ordered=True)
         data_bulan = data_bulan.sort_values(by='datebayar')
         data_bulan = data_bulan.pivot_table(index=['datebayar'],columns='ket',values='nominal').reset_index()
-        bulan_ket = ff.create_table(data_bulan)
+        
+        
 
         data_map = data_kecil.groupby(['SEKSI','MAP','NAMA_AR']).sum().reset_index()
         data_map = data_map[data_map['nominal']>0]
@@ -141,12 +142,13 @@ class mpn_app(HydraHeadApp):
         map.update_layout({'showlegend' : True,'plot_bgcolor':'rgba(0, 0, 0,0)','paper_bgcolor': 'rgba(0, 0, 0,0)',
         'margin_t':1 ,'margin_l':1})
 
-        coljenis, colket = st.columns(2)
-        with coljenis:
-            st.altair_chart(bulan)
+        colket, coljenis = st.columns(2)
         with colket:
             st.title('Per Jns Penerimaan')
-            st.plotly_chart(bulan_ket)
+            st.table(data_bulan.assign(hack='').set_index('hack'))
+        with coljenis:
+            st.altair_chart(bulan)
+        
 
         st.markdown("""<hr style="height:3px;border:none;color:#FFFFFF;background-color:#ffc91b;" /> """, unsafe_allow_html=True)
         st.plotly_chart(map)
