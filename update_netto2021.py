@@ -20,176 +20,75 @@ class update_db(HydraHeadApp):
     def run(self):
       db_conn = create_engine('mysql://sugengw07:sgwi2341@127.0.0.1:3306/mpninfo')
       connection = db_conn.raw_connection()
-      kueri = '''
-        SELECT admin,
-       npwp,
-       kpp,
-       cabang,
-       nama,
-       kdmap,
-       kdbayar,
-       masa,
-       tahun,
-       tanggalbayar,
-       bulanbayar,
-       tahunbayar,
-       datebayar,
-       nominal,
-       ntpn,
-       bank,
-       nosk,
-       nospm,
-       tipe,
-       source,
-       extra,
-       billing,
-       nop,
-       pembuat,
-       CASE
-         WHEN SOURCE = 1 THEN 'MPN'
-         ELSE 'SPM'
-       END AS ket
-      FROM MPN
-      WHERE (tahunbayar) = '2021'
-      UNION ALL
-      SELECT admin,
-       npwp,
-       kpp,
-       cabang,
-       '',
-       kdmap,
-       '',
-       '',
-       '',
-       DAY(tanggal) AS TANGGALBAYAR,
-       BULAN,
-       TAHUN,
-       tanggal,
-       NOMINAL*-1,
-       '',
-       '',
-       '',
-       '',
-       '',
-       3 AS SOURCE,
-       '',
-       '',
-       '',
-       '',
-       'SPMKP' AS ''
-      FROM spmkp
-      WHERE (TAHUN) = '2021'
-      UNION ALL
-      SELECT A.admin,
-       A.npwp,
-       A.kpp,
-       A.cabang,
-       A.nama,
-       kdmap,
-       kdbayar,
-       masapajak,
-       tahunpajak,
-       DAY(TANGGALDOC) AS TANGGALBAYAR,
-       MONTH(TANGGALDOC) BULAN,
-       YEAR(TANGGALDOC) TAHUN,
-       TANGGALDOC,
-       NOMINAL*-1,
-       ntpn,
-       '',
-       nopbk,
-       '',
-       '',
-       4 AS SOURCE,
-       '',
-       '',
-       '',
-       '',
-       'PBK KIRIM' AS ''
-      FROM PBK A
-        INNER JOIN MASTERFILE B ON A.NPWP = B.NPWP
-      WHERE YEAR(TANGGALDOC) = '2021'
-      AND   A.KPP = B.KPP
-      AND   A.CABANG = B.CABANG
-      UNION ALL
-      SELECT A.ADMIN,
-       npwp2,
-       kpp2,
-       cabang2,
-       nama2,
-       kdmap2,
-       kdbayar2,
-       masapajak2,
-       tahunpajak2,
-       DAY(TANGGALDOC) AS TANGGALBAYAR,
-       MONTH(TANGGALDOC) BULAN,
-       YEAR(TANGGALDOC) TAHUN,
-       TANGGALDOC,
-       NOMINAL,
-       ntpn,
-       '',
-       nopbk,
-       '',
-       '',
-       5 AS SOURCE,
-       '',
-       '',
-       '',
-       '',
-       'PBK TERIMA' AS ''
-      FROM PBK A
-        INNER JOIN MASTERFILE B ON A.NPWP2 = B.NPWP
-      WHERE YEAR(TANGGALDOC) = '2021'
-      AND   A.KPP2 = B.KPP
-      AND   A.CABANG2 = B.CABANG;'''
-      def update(x):
-        netto2021 = pd.read_sql(x,db_conn)
-        netto2021['FULL'] = netto2021.npwp+netto2021.kpp+netto2021.cabang
-        netto2021['FULL'] = netto2021['FULL'].astype('str')
 
-        netto2021.drop(['admin', 'npwp', 'kpp', 'cabang'],axis=1,inplace=True)
+      with open(r'F:\STREAMLIT\DASHTEAM\sql\netto2021.sql','r') as kueri:
+        netto2021 = kueri.read()
+        
+      with open(r'F:\STREAMLIT\DASHTEAM\sql\netto2022.sql','r') as kueri:
+        netto2022 = kueri.read()
+
+      def update2021(x):
+        netto = pd.read_sql(x,db_conn)
+        netto['FULL'] = netto.npwp+netto.kpp+netto.cabang
+        netto['FULL'] = netto['FULL'].astype('str')
+
+        netto.drop(['admin', 'npwp', 'kpp', 'cabang'],axis=1,inplace=True)
         kestring = ['tanggalbayar','bulanbayar', 'tahunbayar'] 
         for i in kestring:
-            netto2021[i] = netto2021[i].astype('str')
+            netto[i] = netto[i].astype('str')
 
         mf = pd.read_sql('select * from dashteam_mf;',con=db_conn)
 
         kdmap = pd.read_sql('select * from dashteam_map',con=db_conn)
-        netto2021 = pd.merge(netto2021,mf,left_on='FULL',right_on='NPWP',how='left')
-        netto2021 = pd.merge(netto2021,kdmap,left_on='kdmap',right_on='KD MAP',how='left')
-        netto2021.drop('kdmap',axis=1,inplace=True)
+        netto = pd.merge(netto,mf,left_on='FULL',right_on='NPWP',how='left')
+        netto = pd.merge(netto,kdmap,left_on='kdmap',right_on='KD MAP',how='left')
+        netto.drop('kdmap',axis=1,inplace=True)
 
         kosong = ['NAMA_WP', 'NAMA_AR', 'SEKSI', 'NAMA_KLU']
         for i in kosong:
-            netto2021[i].fillna('Non WP Madtim',inplace=True)
+            netto[i].fillna('Non WP Madtim',inplace=True)
 
-        netto2021.to_sql(con=db_conn,name='netto2021',if_exists='replace',index=False)
+        netto.to_sql(con=db_conn,name='netto2021',if_exists='replace',index=False)
 
-      def capaian():
-        #Penerimaan
-        @st.cache(allow_output_mutation=True)
-        def netto21(x):
-          data = pd.read_sql(x,db_conn)
-          return data
-          
-        netto2021 = netto21('select sum(nominal) as netto from netto2021;')['netto'].sum()
-        capaian = (netto2021/10171068857000)*100
-        
-        data = pd.DataFrame(capaian)
-        data.to_sql(con=connection,name='capaian2021',if_exists='replace',index=False)
-       
+      def update2022(x):
+        netto = pd.read_sql(x,db_conn)
+        netto['FULL'] = netto.npwp+netto.kpp+netto.cabang
+        netto['FULL'] = netto['FULL'].astype('str')
+
+        netto.drop(['admin', 'npwp', 'kpp', 'cabang'],axis=1,inplace=True)
+        kestring = ['tanggalbayar','bulanbayar', 'tahunbayar'] 
+        for i in kestring:
+            netto[i] = netto[i].astype('str')
+
+        mf = pd.read_sql('select * from dashteam_mf;',con=db_conn)
+
+        kdmap = pd.read_sql('select * from dashteam_map',con=db_conn)
+        netto = pd.merge(netto,mf,left_on='FULL',right_on='NPWP',how='left')
+        netto = pd.merge(netto,kdmap,left_on='kdmap',right_on='KD MAP',how='left')
+        netto.drop('kdmap',axis=1,inplace=True)
+
+        kosong = ['NAMA_WP', 'NAMA_AR', 'SEKSI', 'NAMA_KLU']
+        for i in kosong:
+            netto[i].fillna('Non WP Madtim',inplace=True)
+
+        netto.to_sql(con=db_conn,name='netto2022',if_exists='replace',index=False)
+      
 
       st.markdown('___')
       
       st.title('Update Data Netto')
-      if st.button('Update Sini hu',key=1):
+      
+      if st.button('Netto 2022 Update Sini hu',key=1):
         st.warning('Silakan Tunggu')
-        update(kueri)
+        update2022(netto2022)
         st.success('Sukses hu')
-      st.title('Update Data Capaian')
-      if st.button('Update Sini hu',key=2):
+      
+      if st.button('Netto 2021 Update Sini hu',key=1):
         st.warning('Silakan Tunggu')
-        capaian = capaian()
+        update2021(netto2021)
         st.success('Sukses hu')
+
+     
           
         
       return super().run()
