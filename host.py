@@ -10,6 +10,7 @@ from EKSPLOR import eda_app
 from login_app import LoginApp
 from dashboard_app import dashboard
 from update_netto2021 import update_db
+from 
 
 if __name__ == '__main__':
     over_theme = {'txc_inactive': '#C99E10','menu_background':'#02275d','option_active':'#ffc91b','txc_active: Active':'#102754'}
