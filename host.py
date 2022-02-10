@@ -10,7 +10,7 @@ from EKSPLOR import eda_app
 from login_app import LoginApp
 from dashboard_app import dashboard
 from update_netto2021 import update_db
-from 
+from visualisasi import report2021_app
 
 if __name__ == '__main__':
     over_theme = {'txc_inactive': '#C99E10','menu_background':'#02275d','option_active':'#ffc91b','txc_active: Active':'#102754'}
@@ -30,12 +30,14 @@ if __name__ == '__main__':
     app.add_app('Data_Approweb',app=Pemanfaatan_App(title='Data_Approweb'))
     app.add_app('Eksplorasi Data', app = eda_app(title='Eksplorasi Data'))
     app.add_app('Update Database',app=update_db(title = 'Update Database'))
+    app.add_app('Laporan Penerimaan 2021',app=report2021_app(title='Laporan Penerimaan 2021'))
 
    
     user_access_level, username = app.check_access()
     if user_access_level >= 1:
         complex_nav = {
             'Dashboard': ['Dashboard'],
+            'Visualisasi':'Laporan Penerimaan 2021'
             '🔥 Kinerja Penerimaan': ['MPN','PPM_PKM'],
             'Approweb': ['Aktivitas_Approweb',"Data_Approweb"],
             'Tools': ["Eksplorasi Data"],
