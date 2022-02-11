@@ -1,6 +1,7 @@
 from operator import add
 from hydralit import HydraHeadApp
 from hydralit.hydra_app import HydraApp
+from sqlalchemy.sql.functions import user
 import streamlit as st 
 from MPN import mpn_app
 from PPMPKM import ppmpkm_app
@@ -11,6 +12,7 @@ from login_app import LoginApp
 from dashboard_app import dashboard
 from update_netto2021 import update_db
 from visualisasi import report2021_app
+from dash_powerbi import penerimaan2022_app
 
 if __name__ == '__main__':
     over_theme = {'txc_inactive': '#C99E10','menu_background':'#02275d','option_active':'#ffc91b','txc_active: Active':'#102754'}
@@ -23,7 +25,8 @@ if __name__ == '__main__':
     navbar_theme=over_theme)    
 
     app.add_app('Login',app=LoginApp(title='Login'),is_login=True)
-    app.add_app('Dashboard', app=dashboard(title='Dashboard'),is_home=True)
+    app.add_app('Dashboard',app=penerimaan2022_app(title='Dashboard'),is_home=True)
+    #app.add_app('Dashboard', app=dashboard(title='Dashboard'),is_home=True)
     app.add_app('MPN',icon='📊',app=mpn_app(title = 'MPN'))
     app.add_app('PPM_PKM',icon='📈', app=ppmpkm_app(title='PPM_PKM') )
     app.add_app('Aktivitas_Approweb', app=approweb_app(title='Aktivitas_Approweb'))
@@ -34,14 +37,23 @@ if __name__ == '__main__':
 
    
     user_access_level, username = app.check_access()
-    if user_access_level >= 1:
+    if user_access_level > 1:
         complex_nav = {
             'Dashboard': ['Dashboard'],
-            'Visualisasi':'Laporan Penerimaan 2021'
-            '🔥 Kinerja Penerimaan': ['MPN','PPM_PKM'],
-            'Approweb': ['Aktivitas_Approweb',"Data_Approweb"],
+            'Visualisasi 🔥':['Laporan Penerimaan 2021','MPN'],
+            #'🔥 Kinerja Penerimaan': ['MPN','PPM_PKM'],
+            #'Approweb': ['Aktivitas_Approweb',"Data_Approweb"],
             'Tools': ["Eksplorasi Data"],
             'Admin':['Update Database']
+        }
+    elif user_access_level == 1:
+        complex_nav = {
+            #'Dashboard': ['Dashboard'],
+            'Visualisasi 🔥':['Laporan Penerimaan 2021'],
+            #'🔥 Kinerja Penerimaan': ['MPN','PPM_PKM'],
+            #'Approweb': ['Aktivitas_Approweb',"Data_Approweb"],
+            #'Tools': ["Eksplorasi Data"],
+            #'Admin':['Update Database']
         }
     else:
         complex_nav = {

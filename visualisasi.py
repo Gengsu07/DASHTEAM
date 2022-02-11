@@ -19,6 +19,8 @@ class report2021_app(HydraHeadApp):
             padding-left: {1}rem;
             padding-bottom: {padding}rem;}} </style> """, unsafe_allow_html=True)
 
+        
+        
         st.markdown('''
-        <iframe title="1.Laporan Penerimaan 2021 - TPR_SR" width="1140" height="541.25" src="https://app.powerbi.com/reportEmbed?reportId=64000438-494c-4c21-acc1-f16e4fc3ed7d&autoAuth=true&ctid=b2e7bf22-070a-4364-b049-4d31669854c4&config=eyJjbHVzdGVyVXJsIjoiaHR0cHM6Ly93YWJpLXNvdXRoLWVhc3QtYXNpYS1iLXByaW1hcnktcmVkaXJlY3QuYW5hbHlzaXMud2luZG93cy5uZXQvIn0%3D" frameborder="0" allowFullScreen="true"></iframe>''',
+        <iframe title="1.Laporan Penerimaan 2021 - TPR_SR" width="1366" height="768" src="https://app.powerbi.com/reportEmbed?reportId=9064d0ce-e0f5-4c28-a153-9bd95785884f&autoAuth=true&ctid=b2e7bf22-070a-4364-b049-4d31669854c4&config=eyJjbHVzdGVyVXJsIjoiaHR0cHM6Ly93YWJpLXNvdXRoLWVhc3QtYXNpYS1iLXByaW1hcnktcmVkaXJlY3QuYW5hbHlzaXMud2luZG93cy5uZXQvIn0%3D" frameborder="0" allowFullScreen="true"></iframe>''',
         unsafe_allow_html=True)
