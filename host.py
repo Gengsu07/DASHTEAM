@@ -10,7 +10,7 @@ from DATA_APPROWEB import Pemanfaatan_App
 from EKSPLOR import eda_app
 from login_app import LoginApp
 from dashboard_app import dashboard
-from update_netto2021 import update_db
+from update_netto2021 import update_db#
 from visualisasi import report2021_app
 from dash_powerbi import penerimaan2022_app
 
@@ -37,19 +37,19 @@ if __name__ == '__main__':
 
    
     user_access_level, username = app.check_access()
-    if user_access_level > 1:
+    if user_access_level >= 2:
         complex_nav = {
             'Dashboard': ['Dashboard'],
             'Visualisasi 🔥':['Laporan Penerimaan 2021','MPN'],
-            #'🔥 Kinerja Penerimaan': ['MPN','PPM_PKM'],
-            #'Approweb': ['Aktivitas_Approweb',"Data_Approweb"],
+            '🔥 Kinerja Penerimaan': ['MPN','PPM_PKM'],
+            'Approweb': ['Aktivitas_Approweb',"Data_Approweb"],
             'Tools': ["Eksplorasi Data"],
             'Admin':['Update Database']
         }
     elif user_access_level == 1:
         complex_nav = {
             #'Dashboard': ['Dashboard'],
-            'Visualisasi 🔥':['Laporan Penerimaan 2021'],
+            'Visualisasi 🔥':['Laporan Penerimaan 2021']
             #'🔥 Kinerja Penerimaan': ['MPN','PPM_PKM'],
             #'Approweb': ['Aktivitas_Approweb',"Data_Approweb"],
             #'Tools': ["Eksplorasi Data"],
