@@ -37,7 +37,7 @@ if __name__ == '__main__':
 
    
     user_access_level, username = app.check_access()
-    if user_access_level >= 2:
+    if user_access_level == 1:
         complex_nav = {
             'Dashboard': ['Dashboard'],
             'Visualisasi 🔥':['Laporan Penerimaan 2021','MPN'],
@@ -46,18 +46,15 @@ if __name__ == '__main__':
             'Tools': ["Eksplorasi Data"],
             'Admin':['Update Database']
         }
-    elif user_access_level == 1:
+    elif user_access_level == 2:
         complex_nav = {
-            #'Dashboard': ['Dashboard'],
-            'Visualisasi 🔥':['Laporan Penerimaan 2021']
-            #'🔥 Kinerja Penerimaan': ['MPN','PPM_PKM'],
-            #'Approweb': ['Aktivitas_Approweb',"Data_Approweb"],
-            #'Tools': ["Eksplorasi Data"],
-            #'Admin':['Update Database']
+            'Dashboard': ['Dashboard'],
+            'Visualisasi 🔥':['Laporan Penerimaan 2021'],
+            '🔥 Kinerja Penerimaan': ['MPN','PPM_PKM']
         }
     else:
         complex_nav = {
-            'Dashboard': ['Dashboard'],
+            'Dashboard': ['Dashboard']
         }
 
     app.run(complex_nav)

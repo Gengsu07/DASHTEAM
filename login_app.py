@@ -97,8 +97,8 @@ class LoginApp(HydraHeadApp):
         #this method returns a value indicating the success of verifying the login details provided and the permission level, 1 for default access, 0 no access etc.
 
         if login_data['username'] == 'Pajak' and login_data['password'] == 'ceria':
-            return 3
-        elif login_data['username'] == 'viewer' and login_data['password'] == 'ceria007':
             return 1
+        elif login_data['username'] == 'viewer' and login_data['password'] == 'ceria007':
+            return 2
         else:
-            return 0
+            return 3

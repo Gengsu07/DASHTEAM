@@ -18,6 +18,7 @@ class update_db(HydraHeadApp):
         self.title = title
 
     def run(self):
+      conn = create_engine("postgresql+pg8000://postgres:sgwi2341@localhost/penerimaan")
       db_conn = create_engine('mysql://sugengw07:sgwi2341@127.0.0.1:3306/mpninfo')
       connection = db_conn.raw_connection()
 
@@ -71,7 +72,7 @@ class update_db(HydraHeadApp):
         for i in kosong:
             netto[i].fillna('Non WP Madtim',inplace=True)
 
-        netto.to_sql(con=db_conn,name='netto2022',if_exists='replace',index=False)
+        netto.to_sql(con=conn,name='penerimaan_2022',if_exists='replace',index=False)
       
 
       st.markdown('___')
