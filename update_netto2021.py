@@ -64,7 +64,7 @@ class update_db(HydraHeadApp):
         mf = pd.read_sql('select * from dashteam_mf;',con=db_conn)
 
         kdmap = pd.read_sql('select * from dashteam_map',con=db_conn)
-        netto = pd.merge(netto,mf,left_on='FULL',right_on='NPWP',how='left')
+        netto = pd.merge(netto,mf,left_on='FULL',right_on='FULL',how='left')
         netto = pd.merge(netto,kdmap,left_on='kdmap',right_on='KD MAP',how='left')
         netto.drop('kdmap',axis=1,inplace=True)
 
